@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Schedule</title>
+    <link rel="stylesheet" href="../bower_components/bootstrap/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../style.css">
+</head>
+<body class="main" ng-app="main">
+
+<article class="container" ng-controller="MainCtrl">
+    <div class="row">
+        <div class="logout">Log out <span class="glyphicon glyphicon-log-out"></span></div>
+    </div>
+    <div class="row main-row">
+        <div class="container-fluid">
+            <div class="panel container-fluid col-xs-12 col-sm-2">
+                <div class="row">
+                    <div class="block-name"> Type of option</div>
+                    <input class="option-input" type="text" placeholder="Option" ng-model="typeOption">
+                    <div class="add-type-option" ng-click="addTypeOption()"> Add</div>
+                    <div class="block-list-type-option">
+                        <div ng-repeat="option in typesOption track by $index">
+                            <div class="list-type-option">
+                                {{option}}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="panel container-fluid col-xs-12 col-sm-2">
+                <div class="row">
+                    <div class="block-name"> Add object</div>
+                    <input class="option-input" type="text" placeholder="Object name" ng-model="object">
+                    <input class="input-params count" type="text" placeholder="Count" ng-model="count">
+                    <input class="input-params" type="text" placeholder="Time" ng-model="time">
+                    <div class="properties-logo"> Properties</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</article>
+
+
+<script type="text/javascript" src="../bower_components/angular/angular.min.js"></script>
+<script type="text/javascript" src="main.js"></script>
+<script type="text/javascript" src="main.controller.js"></script>
+<script type="text/javascript" src="main.service.js"></script>
+</body>
+</html>

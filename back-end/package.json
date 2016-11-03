@@ -1,0 +1,16 @@
+{
+  "name": "schedule",
+  "description": "this web-application creates schedules online",
+  "author": "front-end: anastasiameoww@gmail.com, back-end: skachkov.dima@yahoo.com",
+  "dependencies": {
+    "async": "^2.1.1",
+    "body-parser": "^1.15.2",
+    "cookie-parser": "^1.4.3",
+    "debug": "^2.2.0",
+    "express": "^4.14.0",
+    "jade": "^1.11.0",
+    "mysql": "^2.11.1",
+    "supervisor": "^0.11.0"
+  },
+  "engine": "node 0.4.1"
+}

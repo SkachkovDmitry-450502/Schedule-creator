@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Schedule</title>
+    <link rel="stylesheet" href="../bower_components/bootstrap/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../style.css">
+</head>
+<body class="sign-up" ng-app="sign-up">
+
+<article class="container">
+    <div class="back-login" onclick="location.href='/login';"><span class="glyphicon glyphicon-chevron-left"></span> Log
+        in
+    </div>
+    <div class="row panel-row" ng-controller="SignUpCtrl">
+        <div class="container-fluid"></div>
+        <div class="col-xs-12 col-sm-6 col-sm-offset-3">
+            <div class="panel container-fluid">
+                <div class="logo"> SCHEDULE CREATOR</div>
+                <form role="form" name="signUpForm">
+                    <input class="form-input" type="email" placeholder="Email*" ng-model="user.email"
+                           ng-mousedown="errorEmail = false;" required>
+                    <input class="form-input" type="password" placeholder="Password*" ng-model="user.password"
+                           ng-mousedown="errorPassword = false;" required>
+                    <input class="form-input" type="password" placeholder="Confirm password*"
+                           ng-model="user.passwordControl" ng-mousedown="errorPassword = false;" required>
+                    <div class="notification" ng-if="errorEmail"> * User with this email is already exist.</div>
+                    <div class="notification" ng-if="errorPassword"> * Please check that you have entered your password
+                        correctly.
+                    </div>
+                    <button ng-disabled="signUpForm.$invalid" class="form-btn sign-up-btn" ng-click="signUp()"> Sign
+                        up
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</article>
+
+
+<script type="text/javascript" src="../bower_components/angular/angular.min.js"></script>
+<script type="text/javascript" src="sign-up.js"></script>
+<script type="text/javascript" src="sign-up.controller.js"></script>
+<script type="text/javascript" src="sign-up.service.js"></script>
+</body>
+</html>
