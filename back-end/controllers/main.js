@@ -1,131 +1,93 @@
+'use strict';
+
 var async = require('async');
 var debug = require('debug');
 var scheduleDB = require('../db/scheduleDB');
 var dayDB = require('../db/dayDB');
+var keyDB = require('../db/parameterDB');
 var objectDB = require('../db/objectDB');
-var parameterDB = require('../db/parameterDB');
+var parameterDB = require('../db/propertyDB');
 
-/* GET SCHEDULES FUNCTIONS */
+/* GET FUNCTIONS */
 
-exports.getSchedules = function (email, callback) {
+exports.getSchedulesName = function (email, callback) {
     async.waterfall([
         function (callback) {
             scheduleDB.getSchedulesByEmail(email, callback);
         },
-        function (schedule, callback) {
-            async.each(schedule, function (info, callback) {
-                getScheduleInformation(info, callback);
-            }, function (err) {
-                if (err) {
-                    callback(err);
-                } else {
-                    callback(null, schedule);
-                }
-            });
+        function (schedules, callback) {
+            console.log(schedules);
+            async.map(schedules, function (info, callback) {
+                callback(null, info['name']);
+            }, callback);
         }
     ], callback);
 };
 
-function getScheduleInformation(schedule, callback) {
-    async.parallel([
-        function (callback) {
-            addObjectInfoToSchedule(schedule, callback)
-        },
-        function (callback) {
-            addDayInfoToSchedule(schedule, callback);
-        }
-    ], callback);
-}
+/* GET SCHEDULE INFORMATION */
 
-function addDayInfoToSchedule(schedule, callback) {
+exports.sendScheduleInformation = function (email, name, callback) {
+    async.parallel({
+        objects: async.apply(getObjectsInfo, email, name),
+        days: async.apply(dayDB.get, email, name),
+        keys: async.apply(getKeys, email, name)
+    }, callback);
+};
+
+function getKeys(email, name, callback) {
     async.waterfall([
-        function (callback) {
-            dayDB.getDaysByEmailAndScheduleName(schedule['email'], schedule['name'], callback);
-        },
-        function (days, callback) {
-            schedule['days'] = days;
-            callback(null, true);
+        async.apply(keyDB.get, email, name),
+        function (keys, callback) {
+            async.map(keys, function (info, callback) {
+                callback(null, info['name']);
+            }, callback)
         }
-    ], callback);
+    ], callback)
 }
 
-function addObjectInfoToSchedule(schedule, callback) {
+function getObjectsInfo(email, scheduleName, callback) {
     async.waterfall([
-        function (callback) {
-            getObjectsInfo(schedule['name'], callback);
-        },
-        function (object, callback) {
-            schedule['objects'] = object;
-            callback(null, true);
-        }
+        async.apply(objectDB.get, email, scheduleName),
+        addParametersInformation
     ], callback);
 }
 
-function getObjectsInfo(scheduleName, callback) {
-    async.waterfall([
-        function (callback) {
-            objectDB.getObjects(scheduleName, callback);
-        },
-        function (object, callback) {
-            addParametersInfoToObject(object, callback)
-        }
-    ], callback);
-}
-
-function addParametersInfoToObject(object, callback) {
-    async.each(object, function (info, callback) {
+function addParametersInformation(objects, callback) {
+    async.map(objects, function (info, callback) {
         async.waterfall([
-            function (callback) {
-                getParameter(info['idObject'], callback);
-            },
-            function (parameter, callback) {
-                info['parameter'] = parameter;
-                callback();
+            async.apply(getParameter, info['idObject']),
+            function (parameters, callback) {
+                info['parameters'] = parameters;
+                callback(null, info);
             }
-        ], callback);
-    }, function (err) {
-        if (err) {
-            callback(err);
-        } else {
-            callback(null, object);
-        }
-    });
+        ], callback)
+    }, callback)
 }
 
 function getParameter(idObject, callback) {
     async.waterfall([
-        function (callback) {
-            parameterDB.getParametersByIdObject(idObject, callback);
-        },
-        function (parameter, callback) {
-            transformToObject(parameter, callback);
+        async.apply(parameterDB.get, idObject),
+        function (parameters, callback) {
+            let obj = {};
+            async.each(parameters, function (info, callback) {
+                obj[info['name']] = info['value'];
+                callback();
+            }, function (err) {
+                if (err) {
+                    callback(err);
+                } else {
+                    callback(null, obj);
+                }
+            });
         }
     ], callback);
-}
-
-function transformToObject(parameter, callback) {
-    var array = [];
-    async.each(parameter, function (info, callback) {
-            array.push(info.name);
-            callback();
-        },
-        function (err) {
-            if (err) {
-                callback(err);
-            } else {
-                callback(null, array);
-            }
-        }
-    );
 }
 
 /* SAVE SCHEDULE FUNCTIONS */
 
 exports.saveSchedule = function (schedule, callback) {
     async.waterfall([
-        function (callback) {
-            checkScheduleExist(schedule['email'], schedule['name'], callback);
-        },
+        async.apply(checkScheduleExist, schedule['email'], schedule['name']),
         function (isExist, callback) {
             if (isExist) {
                 callback(null, false)
@@ -139,15 +101,9 @@ exports.saveSchedule = function (schedule, callback) {
 
 function checkScheduleExist(email, name, callback) {
     async.waterfall([
-        function (callback) {
-            scheduleDB.getScheduleByEmailAndName(email, name, callback);
-        },
+        async.apply(scheduleDB.getScheduleByEmailAndName, email, name),
         function (schedule, callback) {
-            if (schedule) {
-                callback(null, true);
-            } else {
-                callback(null, false);
-            }
+            callback(null, !!schedule);
         }
     ], callback);
 }
@@ -156,14 +112,12 @@ function checkScheduleExist(email, name, callback) {
 
 exports.saveDay = function (day, callback) {
     async.waterfall([
-        function (callback) {
-            checkDayExist(day['email'], day['scheduleName'], day['name'], callback);
-        },
+        async.apply(checkDayExist, day['email'], day['scheduleName'], day['name']),
         function (isExist, callback) {
             if (isExist) {
                 callback(null, false);
             } else {
-                dayDB.insertDay(day, callback);
+                dayDB.insert(day, callback);
             }
         }
     ], callback);
@@ -171,72 +125,104 @@ exports.saveDay = function (day, callback) {
 
 function checkDayExist(email, scheduleName, name, callback) {
     async.waterfall([
-        function (callback) {
-            dayDB.getDayByEmailScheduleNameAndName(email, scheduleName, name, callback);
-        },
+        async.apply(dayDB.getByName, email, scheduleName, name),
         function (day, callback) {
-            if (day.length > 0) {
-                callback(null, true);
-            } else {
+            callback(null, day.length > 0);
+        }
+    ], callback);
+}
+
+/* SAVE KEY FUNCTIONS */
+
+exports.saveKey = function (key, saveKeyCallback){
+    async.waterfall([
+        async.apply(checkKeyExist, key),
+        function (isExist, callback) {
+            if(isExist){
                 callback(null, false);
+            } else {
+                keyDB.insert(key, callback);
             }
+        }
+    ], saveKeyCallback);
+};
+
+function checkKeyExist(key, callback) {
+    async.waterfall([
+        async.apply(keyDB.getByName, key['email'], key['scheduleName'], key['name']),
+        function (key, callback) {
+            callback(null, !!key);
         }
     ], callback);
 }
 
 /* SAVE OBJECT FUNCTIONS */
 
-exports.saveObject = function (object, callback) {
+exports.saveObject = function (object, saveObjectCallback) {
     async.waterfall([
-        function (callback) {
-            objectDB.getObjectsByName(object['email'], object['scheduleName'], object['name']);
-        },
+        async.apply(objectDB.getByName, object['email'], object['scheduleName'], object['name']),
+        addParametersInformation,
         function (scheduleObjects, callback) {
             if (scheduleObjects.length > 0) {
-                checkPresenceOfObject(scheduleObjects, object, callback);
+                checkEqualParameters(scheduleObjects, object, callback);
             } else {
-                callback(null, true);
+                callback(null, false);
             }
         },
         function (isEqualParameters, callback) {
-            if(isEqualParameters){
+            if (isEqualParameters) {
                 callback(null, false);
             } else {
-                callback(null, true);
-                //objectDB.insertObject(object, callback);
+                async.waterfall([
+                    async.apply(objectDB.insert, object),
+                    async.apply(saveParameters, object['parameters'])
+                ], callback);
             }
         }
-    ], callback);
+    ], saveObjectCallback);
 };
 
-function checkPresenceOfObject(scheduleObjects, object, callback) {
-    // async.each(scheduleObjects, function (info, callback) {
-    //     async.waterfall([
-    //         function (callback) {
-    //             checkEqualParameters(info['parameters'], object['parameters'], callback);
-    //         },
-    //         function (isEqual, callback) {
-    //             if(isEqual){
-    //                 finalCallback(null, false);
-    //             } else {
-    //                 callback();
-    //             }
-    //         }
-    //     ], callback)
-    // }, finalCallback);
+function saveParameters(parameters, idObject, callback) {
+    console.log(idObject, parameters);
+    async.eachOf(parameters, function (value, key, callback) {
+        console.log(idObject, value, key);
+        parameterDB.insert(idObject, value, key, callback);
+    }, function (err) {
+        if(err){
+            callback(err);
+        } else{
+            callback(null, true);
+        }
+    });
+}
+
+//TODO check various length of parameters!
+function checkEqualParameters(scheduleObjects, object, callback) {
+    var keys = Object.keys(object['parameters']);
     async.some(scheduleObjects, function (info, callback) {
-        checkEqualParameters(info['parameters'], object['parameters'], callback);
+        async.every(keys, function (key, callback) {
+            // as a result return 'true' if parameter is exist and 'false' if not
+            callback(null, info['parameters'][key] && info['parameters'][key] == object['parameters'][key]);
+        }, callback);
+
     }, callback)
 }
 
-function checkEqualParameters(first, second, callback) {
-    async.every(first, function (firstParameter, callback) {
-        async.some(second, function (secondParameter, callback) {
-            var firstParameterKeys = Object.keys(firstParameter);
-            async.every(firstParameterKeys, function (key, callback) {
-                callback(null, secondParameter[key] && firstParameter[key] == secondParameter[key]);
-            });
-            callback(null, firstParameter == secondParameter);
-        }, callback);
-    });
-}
+/* DELETE SCHEDULE INFORMATION */
+
+exports.deleteSchedule = function (email, name, callback) {
+    scheduleDB.deleteSchedule(email, name, callback);
+};
+
+
+/* DELETE OBJECT INFORMATION */
+
+exports.deleteObject = function (object, callback) {
+    objectDB.deleteObject(object, callback);
+};
+
+/* DELETE PARAMETER INFORMATION */
+
+exports.deleteParameter = function (parameter, callback) {
+
+};

@@ -1,25 +1,27 @@
 var express = require('express');
 var path = require('path');
-var controller = require('../controllers/login');
 var router = express.Router();
+
+import ControllersFactory from '../factories/controllersFactory';
 
 router.get('/', function (req, res, next) {
     res.sendFile(path.resolve(__dirname, '../../front-end/login/login.html'));
 });
 
 router.post('/', function (req, res, next) {
-    controller.login(req.body['email'], req.body['password'], function (err, isLogin) {
-        if (err){
-            console.log(err.message);
-            next(err);
-        } else {
-            if (isLogin) {
-                res.sendStatus(200);
-            } else {
-                res.sendStatus(403);
-            }
-        }
-    });
+    console.log('login');
+    new Promise((resolve, reject) => {
+        ControllersFactory.create('user', req.body)
+            .then(controller => {
+                return controller.login();
+            })
+            .then(isLogin => {
+                isLogin ? res.sendStatus(200) : res.sendStatus(304);
+            })
+            .catch(error => {
+                next(error);
+            });
+    })
 });
 
 module.exports = router;

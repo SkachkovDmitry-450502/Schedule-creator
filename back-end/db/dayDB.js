@@ -2,30 +2,53 @@ var mysql = require('mysql');
 var async = require('async');
 var db = require('./db');
 
-exports.getDaysByEmailAndScheduleName = function (email, scheduleName, callback) {
-    async.waterfall([
-        function (callback) {
-            db.pool.getConnection(callback);
-        },
-        function (connection, callback) {
-            connection.query('SELECT day.name, day.duration, day.timetable FROM day ' +
-                'INNER JOIN schedule USING(idSchedule) ' +
-                'INNER JOIN user USING(idUser) ' +
-                'WHERE user.email = ? AND schedule.name = ?', [email, scheduleName],
-                function (err, days) {
-                    connection.release();
-                    if (err) {
-                        callback(err);
-                    } else {
-                        callback(null, days);
-                    }
-                }
-            );
-        }
-    ], callback);
-};
+import DB from './db';
 
-exports.getDayByEmailScheduleNameAndName = function (email, scheduleName, name, callback) {
+const getSQL = 'SELECT day.name, day.duration, day.timetable FROM day ' +
+    'INNER JOIN schedule USING(idSchedule) ' +
+    'INNER JOIN user USING(idUser) ' +
+    'WHERE user.email = ? AND schedule.name = ?';
+
+export default class DayDB extends DB{
+
+    static get(info){
+        return new Promise((resolve, reject) => {
+            this.getConnection()
+                .then(connection => {
+                    connection.query(getSQL, [info.email, info.name], function (error, days) {
+                        connection.release();
+                        error ? reject(error) : resolve(days);
+                    });
+                })
+                .catch(error => reject(error));
+        });
+    }
+}
+
+// exports.get = function (email, scheduleName, callback) {
+//     async.waterfall([
+//         function (callback) {
+//             db.pool.getConnection(callback);
+//         },
+//         function (connection, callback) {
+//             connection.query('SELECT day.name, day.duration, day.timetable FROM day ' +
+//                 'INNER JOIN schedule USING(idSchedule) ' +
+//                 'INNER JOIN user USING(idUser) ' +
+//                 'WHERE user.email = ? AND schedule.name = ?', [email, scheduleName],
+//                 function (err, days) {
+//                     connection.release();
+//                     if (err) {
+//                         callback(err);
+//                     } else {
+//                         callback(null, days);
+//                     }
+//                 }
+//             );
+//         }
+//     ], callback);
+// };
+
+exports.getByName = function (email, scheduleName, name, callback) {
     async.waterfall([
         function (callback) {
             db.pool.getConnection(callback);
@@ -49,7 +72,7 @@ exports.getDayByEmailScheduleNameAndName = function (email, scheduleName, name, 
 };
 
 //TODO refactor sql request
-exports.insertDay = function (day, callback) {
+exports.insert = function (day, callback) {
     async.waterfall([
         function (callback) {
             db.pool.getConnection(callback);

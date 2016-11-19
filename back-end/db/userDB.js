@@ -1,43 +1,37 @@
 var mysql = require('mysql');
-var async = require('async');
-var db = require('./db');
-var schedule = require('./scheduleDB');
 
+import DB from './db';
 
-exports.getUserByEmail = function (email, callback) {
-    async.waterfall([
-        function (callback) {
-            db.pool.getConnection(callback);
-        },
-        function (connection, callback) {
-            connection.query("SELECT email, password FROM user WHERE email = ?", email,
-                function (err, user) {
-                    connection.release();
-                    if (err) {
-                        callback(err);
-                    } else {
-                        callback(null, user[0]);
-                    }
-                });
-        }
-    ], callback);
-};
+const getSQL = 'SELECT email, password FROM user WHERE email = ?';
+const insertSQL = 'INSERT INTO user SET ?';
 
-exports.insertUser = function (user, callback) {
-    async.waterfall([
-        function (callback) {
-            db.pool.getConnection(callback);
-        },
-        function (connection, callback) {
-            connection.query('INSERT INTO user SET ?', user,
-                function (err, rows) {
-                    connection.release();
-                    if (err) {
-                        callback(err);
-                    } else {
-                        callback(null, true);
-                    }
-                });
-        }
-    ], callback);
-};
+export default class UserDB extends DB{
+
+    static get(email) {
+        return new Promise((resolve, reject) => {
+            this.getConnection()
+                .then(
+                    connection => {
+                        connection.query(getSQL, email, function (err, user) {
+                            connection.release();
+                            err ? reject(err) : resolve(user[0]);
+                        });
+                    },
+                    error => reject(error));
+        });
+    }
+
+    static insert() {
+        return new Promise((resolve, reject) => {
+            this.getConnection()
+                .then(
+                    connection => {
+                        connection.query(insertSQL, this.user, function (err, result) {
+                            connection.release();
+                            err ? reject(err) : resolve(result.insertId);
+                        })
+                    },
+                    error => reject(error));
+        });
+    }
+}

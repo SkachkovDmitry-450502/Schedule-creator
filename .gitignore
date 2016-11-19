@@ -1,4 +1,5 @@
 .idea/
 back-end/.idea
-front-end/bower_components/
 back-end/node_modules/
+back-end/?????????compiled.js
+front-end/bower_components/

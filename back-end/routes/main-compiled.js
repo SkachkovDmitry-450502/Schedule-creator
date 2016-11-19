@@ -1,3 +1,39 @@
+'use strict';
+
+var _controllersFactory = require('../factories/controllersFactory');
+
+var _controllersFactory2 = _interopRequireDefault(_controllersFactory);
+
+var _schedule = require('../controllers/schedule');
+
+var _schedule2 = _interopRequireDefault(_schedule);
+
+var _object = require('../controllers/object');
+
+var _object2 = _interopRequireDefault(_object);
+
+var _property = require('../controllers/property');
+
+var _property2 = _interopRequireDefault(_property);
+
+var _parameter = require('../controllers/parameter');
+
+var _parameter2 = _interopRequireDefault(_parameter);
+
+var _day = require('../controllers/day');
+
+var _day2 = _interopRequireDefault(_day);
+
+var _path = require('path');
+
+var _path2 = _interopRequireDefault(_path);
+
+var _express = require('express');
+
+var _express2 = _interopRequireDefault(_express);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
 // var express = require('express');
 // var path = require('path');
 // var controller = require('../controllers/main');
@@ -96,79 +132,62 @@
 //         }
 //     });
 // });
-import ControllerFactory from '../factories/controllersFactory';
-import Schedule from '../controllers/schedule';
-import Obj from '../controllers/object';
-import Property from '../controllers/property';
-import Parameter from '../controllers/parameter';
-import Day from '../controllers/day';
+var OK_STATUS = 200;
+var FORBIDDEN_STATUS = 403;
 
-import path from 'path';
-import express from 'express';
-
-const OK_STATUS = 200;
-const FORBIDDEN_STATUS = 403;
-
-let router = express.Router();
+var router = _express2.default.Router();
 
 router.get('/', function (req, res, next) {
-    res.sendFile(path.resolve(__dirname, '../../front-end/main/main.html'));
+    res.sendFile(_path2.default.resolve(__dirname, '../../front-end/main/main.html'));
 });
 
 router.post('/save', function (req, res, next) {
-    ControllerFactory.create(req.body.type)
-        .then(controller => {
-            controller.save(req.body.info);
-        })
-        .then(isSaved => {
-            isSaved ? res.sendStatus(OK_STATUS) : res.sendStatus(FORBIDDEN_STATUS);
-        })
-        .catch(error => next(error));
+    _controllersFactory2.default.create(req.body.type).then(function (controller) {
+        controller.save(req.body.info);
+    }).then(function (isSaved) {
+        isSaved ? res.sendStatus(OK_STATUS) : res.sendStatus(FORBIDDEN_STATUS);
+    }).catch(function (error) {
+        return next(error);
+    });
 });
 
 router.delete('/delete', function (req, res, next) {
-    ControllerFactory.create(req.body.type, req.body.info)
-        .then(controller => {
-            controller.delete(req.body.info);
-        })
-        .then(isDeleted => {
-            isDeleted ? res.sendStatus(OK_STATUS) : res.sendStatus(FORBIDDEN_STATUS);
-        })
-        .catch(error => next(error));
+    _controllersFactory2.default.create(req.body.type, req.body.info).then(function (controller) {
+        controller.delete(req.body.info);
+    }).then(function (isDeleted) {
+        isDeleted ? res.sendStatus(OK_STATUS) : res.sendStatus(FORBIDDEN_STATUS);
+    }).catch(function (error) {
+        return next(error);
+    });
 });
 
 router.post('/update', function (req, res, next) {
-    console.log('hello');
-    ControllerFactory.create(req.body.type, req.body.info)
-        .then(controller => {
-            controller.update(req.body.oldInfo, req.body.newInfo);
-        })
-        .then(isUpdated => {
-            isUpdated ? res.sendStatus(OK_STATUS) : res.sendStatus(FORBIDDEN_STATUS);
-        })
-        .catch(error => next(error));
+    _controllersFactory2.default.create(req.body.type, req.body.info).then(function (controller) {
+        controller.update(req.body.oldInfo, req.body.newInfo);
+    }).then(function (isUpdated) {
+        isUpdated ? res.sendStatus(OK_STATUS) : res.sendStatus(FORBIDDEN_STATUS);
+    }).catch(function (error) {
+        return next(error);
+    });
 });
 
 //TODO maybe get request?
 router.post('/get', function (req, res, next) {
-    let tmp = {};
-    Schedule.get(req.body)
-        .then(schedules => {
-            tmp = schedules;
-            return Promise.all([
-                Day.get({email: req.body.email, name:schedules.names[0].name}),
-                Parameter.get({email: req.body.email, name:schedules.names[0].name}),
-                Obj.get(req.body.email, schedules.names[0].name)
-                    .then(objects => Property.get(objects))
-            ]);
-        })
-        .then(result => {
-            tmp.schedule.days = result[0];
-            tmp.schedule.parameters = result[1];
-            tmp.schedule.objects = result[2];
-            res.send(tmp);
-        })
-        .catch(error => next(error));
+    var tmp = {};
+    _schedule2.default.get(req.body).then(function (schedules) {
+        tmp = schedules;
+        return Promise.all([_day2.default.get(schedules[0]), _parameter2.default.get(schedules[0]), _object2.default.get(schedules[0]).then(function (objects) {
+            return _property2.default.get(objects);
+        })]);
+    }).then(function (result) {
+        tmp.schedule.days = result[0];
+        tmp.schedule.parameters = result[1];
+        tmp.schedule.objects = result[2];
+    }).catch(function (error) {
+        return next(error);
+    });
 });
 
 module.exports = router;
+
+//# sourceMappingURL=main-compiled.js.map
