@@ -1,36 +1,34 @@
-var mysql = require('mysql');
-
 import DB from './db';
 
 const getSQL = 'SELECT email, password FROM user WHERE email = ?';
 const insertSQL = 'INSERT INTO user SET ?';
 
-export default class UserDB extends DB{
+export default class UserDB extends DB {
 
     static get(email) {
         return new Promise((resolve, reject) => {
-            this.getConnection()
+            let request = {
+                sql: getSQL,
+                array: email
+            };
+
+            this.getFromDatabase(request)
                 .then(
-                    connection => {
-                        connection.query(getSQL, email, function (err, user) {
-                            connection.release();
-                            err ? reject(err) : resolve(user[0]);
-                        });
-                    },
+                    user => resolve(user[0]),
                     error => reject(error));
         });
     }
 
-    static insert() {
+    static insert(info) {
         return new Promise((resolve, reject) => {
-            this.getConnection()
+            let request = {
+                sql: insertSQL,
+                array: info
+            };
+
+            this.getFromDatabase(request)
                 .then(
-                    connection => {
-                        connection.query(insertSQL, this.user, function (err, result) {
-                            connection.release();
-                            err ? reject(err) : resolve(result.insertId);
-                        })
-                    },
+                    result => resolve(result.insertId),
                     error => reject(error));
         });
     }

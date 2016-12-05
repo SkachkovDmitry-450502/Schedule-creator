@@ -28,12 +28,7 @@ export default class User {
 
     _checkUserExist() {
         return new Promise((resolve, reject) => {
-            new Promise((resolve, reject)=> {
-                resolve(databaseFactory.create('userDB'));
-            })
-                .then(userDB => {
-                    return userDB.get(this.email);
-                })
+            UserDB.get(this.email)
                 .then(user => {
                     resolve(!!user);
                 })
@@ -43,12 +38,7 @@ export default class User {
 
     _checkPassword() {
         return new Promise((resolve, reject) => {
-            new Promise((resolve, reject)=> {
-                resolve(databaseFactory.create('userDB'));
-            })
-                .then(userDB => {
-                    return userDB.get(this.email);
-                })
+            UserDB.get(this.email)
                 .then(user => {
                     resolve(this.password == user.password);
                 })

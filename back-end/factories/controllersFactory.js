@@ -1,29 +1,32 @@
 import User from '../controllers/user';
 import Schedule from '../controllers/schedule';
 import Obj from '../controllers/object';
+import Day from '../controllers/day';
+import Parameter from '../controllers/parameter';
 
 export default class ControllersFactory {
-    // create(name, object) {
-    //     let constructor = this[name];
-    //     if (!(constructor instanceof Function)) {
-    //         throw {
-    //             name: 'Error',
-    //             message: 'constructor "' + name + '" undefined'
-    //         }
-    //     }
-    //     return new constructor(object);
-    // }
 
     static create(name, object) {
-        switch (name) {
-            case 'schedule':
-                return new Schedule(object);
-            case 'object':
-                return new Obj(object);
-            case 'user':
-                return new User(object);
-            default:
-
-        }
+        return new Promise((resolve, reject) => {
+            switch (name) {
+                case 'object':
+                    resolve(new Obj(object));
+                    break;
+                case 'parameter':
+                    resolve(new Parameter(object));
+                    break;
+                case 'day':
+                    resolve(new Day(object));
+                    break;
+                case 'schedule':
+                    resolve(new Schedule(object));
+                    break;
+                case 'user':
+                    resolve(new User(object));
+                    break;
+                default:
+                    reject(new Error("no such constructor"));
+            }
+        });
     }
 }

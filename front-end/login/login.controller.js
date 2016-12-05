@@ -11,18 +11,13 @@
         $scope.user = {};
 
         $scope.login = function () {
-            LoginService.login($scope.user.email, $scope.user.password).then(function (response) {
-                $scope.error = false;
+            LoginService.login($scope.user.email, $scope.user.password).then(function (data) {
+                localStorage.setItem('email', $scope.user.email);
                 location.href='/main';
-                console.log('welcome :) ');
-            }, function (error) {
-                $scope.error = true;
-                console.log('error');
             });
         };
 
         $scope.signUp = function () {
-            console.log('hh');
             location.href='/sign-up';
         };
 

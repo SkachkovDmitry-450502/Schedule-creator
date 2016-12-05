@@ -1,5 +1,3 @@
-//var mysql = require('mysql');
-import {mysql} from 'mysql'
 import DB from './db';
 
 const getNamesSQL = 'SELECT schedule.name FROM schedule ' +
@@ -16,55 +14,51 @@ const deleteSQL = 'DELETE schedule FROM schedule ' +
 
 export default class ScheduleDB extends DB {
     static getNames(email) {
-        return new Promise((resolve, reject) => {
-            this.getConnection()
-                .then(connection => {
-                    connection.query(getNamesSQL, email, function (error, schedules) {
-                        connection.release();
-                        error ? reject(error) : resolve(schedules);
-                    });
-                })
-                .catch(error => reject(error));
-        });
+        console.log(email);
+        let request = {
+            sql: getNamesSQL,
+            array: email
+        };
+
+        return this.getFromDatabase(request);
     }
 
     static get(email, name) {
         return new Promise((resolve, reject) => {
-            this.getConnection()
-                .then(connection => {
-                    connection.query(getSQL, [email, name], function (error, schedule) {
-                        connection.release();
-                        error ? reject(error) : resolve(schedule[0]);
-                    });
-                })
-                .catch(error => reject(error));
+            let request = {
+                sql: getSQL,
+                array: [email, name]
+            };
+
+            this.getFromDatabase(request)
+                .then(
+                    schedule => resolve(schedule[0]),
+                    error => reject(error));
         });
     }
 
     static insert(schedule) {
         return new Promise((resolve, reject) => {
-            this.getConnection()
-                .then(connection => {
-                    connection.query(insertSQL, [schedule.email, schedule.name], function (error, result) {
-                        connection.release();
-                        error ? reject(error) : resolve(result.insertId);
-                    });
-                })
-                .catch(error => reject(error));
+            let request = {
+                sql: insertSQL,
+                array: [schedule.email, schedule.name]
+            };
+
+            this.getFromDatabase(request)
+                .then(
+                    result => resolve(result.insertId),
+                    error => reject(error));
         });
     }
 
-    static delete(email, name) {
-        return new Promise((resolve, reject) => {
-            this.getConnection()
-                .then(connection => {
-                    connection.query(deleteSQL, [email, name], function (error, result) {
-                        connection.release();
-                        error ? reject(error) : resolve(true);
-                    });
-                })
-                .catch(error => reject(error));
-        });
+    static delete(info) {
+        console.log(info);
+        let request = {
+            sql: deleteSQL,
+            array: [info.email, info.name]
+        };
+
+        return this.getFromDatabase(request);
     }
 }
 

@@ -9,19 +9,16 @@ router.get('/', function (req, res, next) {
 });
 
 router.post('/', function (req, res, next) {
-    console.log('login');
-    new Promise((resolve, reject) => {
-        ControllersFactory.create('user', req.body)
-            .then(controller => {
-                return controller.login();
-            })
-            .then(isLogin => {
-                isLogin ? res.sendStatus(200) : res.sendStatus(304);
-            })
-            .catch(error => {
-                next(error);
-            });
-    })
+    ControllersFactory.create('user', req.body)
+        .then(controller => {
+            return controller.login();
+        })
+        .then(isLogin => {
+            isLogin ? res.sendStatus(200) : res.sendStatus(304);
+        })
+        .catch(error => {
+            next(error);
+        });
 });
 
 module.exports = router;

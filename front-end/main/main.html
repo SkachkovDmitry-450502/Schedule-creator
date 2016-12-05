@@ -4,37 +4,243 @@
     <meta charset="UTF-8">
     <title>Schedule</title>
     <link rel="stylesheet" href="../bower_components/bootstrap/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../bower_components/ui-bootstrap/src/tooltip/tooltip.css">
+    <!--<link rel="stylesheet" href="../bower_components/angular-ui/build/angular-ui.css">-->
     <link rel="stylesheet" href="../style.css">
 </head>
 <body class="main" ng-app="main">
 
-<article class="container" ng-controller="MainCtrl">
-    <div class="row">
+<script type="text/javascript" src="../bower_components/angular/angular.min.js"></script>
+<script type="text/javascript" src="../bower_components/angular-animate/angular-animate.js"></script>
+<script type="text/javascript" src="../bower_components/angular-sanitize/angular-sanitize.js"></script>
+<script type="text/javascript" src="../bower_components/angular-ui/build/angular-ui.js"></script>
+<script type="text/javascript" src="../bower_components/ui-bootstrap/src/popover/popover.js"></script>
+<script type="text/javascript" src="../bower_components/angular-bootstrap/ui-bootstrap-tpls.min.js"></script>
+<script type="text/javascript" src="../bower_components/jquery/dist/jquery.min.js"></script>
+<script type="text/javascript" src="../bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
+
+<article class="container main" ng-controller="MainCtrl">
+    <div class="row width-row">
         <div class="logout">Log out <span class="glyphicon glyphicon-log-out"></span></div>
     </div>
     <div class="row main-row">
-        <div class="container-fluid">
-            <div class="panel container-fluid col-xs-12 col-sm-2">
-                <div class="row">
-                    <div class="block-name"> Type of option</div>
-                    <input class="option-input" type="text" placeholder="Option" ng-model="typeOption">
-                    <div class="add-type-option" ng-click="addTypeOption()"> Add</div>
-                    <div class="block-list-type-option">
-                        <div ng-repeat="option in typesOption track by $index">
-                            <div class="list-type-option">
-                                {{option}}
+        <div class="col-xs-12 col-md-3">
+            <div class="row">
+                <div class="panel">
+                    <div class="row">
+                        <div class="block">
+                            <div class="block-name" ng-click="isCollapsedChooseSchedule = !isCollapsedChooseSchedule">
+                                Choose schedule
+                            </div>
+                            <div uib-collapse="isCollapsedChooseSchedule">
+                                <div ng-if="selectScheduleName === 'Add schedule'" style="margin-top: 15px">
+                                    <form role="form" name="addScheduleForm">
+                                        <input class="option-input" type="text" placeholder="Schedule name"
+                                               ng-model="name"
+                                               required>
+                                        <div align="center">
+                                            <i class="glyphicon glyphicon-arrow-left" ng-show="schedules.length"
+                                               style="cursor: pointer" ng-click="backChooseSchedule()"></i>
+                                            <button ng-click="addSchedule(name)" ng-disabled="addScheduleForm.$invalid">
+                                                <i class="glyphicon glyphicon-plus"
+                                                   style="font-size: small"></i> Add
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                                <div ng-if="selectScheduleName !== 'Add schedule'" style="margin-top: 15px">
+                                    <select class="option-input"
+                                            ng-options="schedule.name for schedule in schedules"
+                                            ng-model="selectSchedule.name"
+                                            ng-change="openSchedule(selectSchedule)"></select>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="panel container-fluid col-xs-12 col-sm-2">
-                <div class="row">
-                    <div class="block-name"> Add object</div>
-                    <input class="option-input" type="text" placeholder="Object name" ng-model="object">
-                    <input class="input-params count" type="text" placeholder="Count" ng-model="count">
-                    <input class="input-params" type="text" placeholder="Time" ng-model="time">
-                    <div class="properties-logo"> Properties</div>
+            <div class="row">
+                <div class="panel">
+                    <div class="row">
+                        <div class="block">
+                            <form role="form" name="addObjectForm">
+                                <div class="block-name" ng-click="isCollapsedAddObject = !isCollapsedAddObject"> Add
+                                    object
+                                </div>
+                                <div uib-collapse="isCollapsedAddObject">
+                                    <input class="option-input" style="margin-top: 15px" type="text" placeholder="Object name"
+                                           ng-model="object.name" required>
+                                    <div class="row indent">
+                                        <input class="col-xs-6 input-params" type="number" min="1" placeholder="Count"
+                                               ng-model="object.count" required>
+                                        <input class="col-xs-6 input-params" type="number" placeholder="Time"
+                                               ng-model="object.duration" required>
+                                    </div>
+                                    <div ng-if="object.properties.length" class="properties-logo"> Properties</div>
+                                    <div class="add-properties" ng-repeat="property in object.properties">
+                                        <div style="border: 1px solid darkgrey; width: 80%; margin-left: 10%; ">
+                                            <i class="glyphicon glyphicon-remove"
+                                               style="font-size: x-small; float: right; cursor: pointer"
+                                               ng-click="deleteObjectProperty($index)"></i>
+                                            <div style="margin-bottom: 15px; margin-top: 15px;">
+                                                <select class="option-input" ng-model="property.name">
+                                                    <option ng-repeat="parameter in parameters track by $index"
+                                                            value="{{parameter.name}}">
+                                                        {{parameter.name}}
+                                                    </option>
+                                                </select>
+                                                <input class="option-input" type="text" placeholder="Property name"
+                                                       ng-model="property.value">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button ng-if="parameters.length" class="option-input"
+                                            ng-click="addParameters()">Add property
+                                    </button>
+                                    <div ng-if="properties.length" class="add-property" align="center"
+                                         ng-click="addParameters()"></div>
+                                    <div align="center">
+                                        <button ng-click="addObject()" ng-disabled="addObjectForm.$invalid"><i
+                                                class="glyphicon glyphicon-plus"
+                                                style="font-size: small"></i> Add
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="panel">
+                    <div class="row">
+                        <div class="block">
+                            <form role="form" name="addParameterForm">
+                                <div class="block-name" ng-click="isCollapsedAddParameter = !isCollapsedAddParameter">
+                                    Add parameter
+                                </div>
+                                <div uib-collapse="isCollapsedAddParameter">
+                                    <input class="option-input" type="text" placeholder="Parameter" style="margin-top: 15px"
+                                           ng-model="parameter.name"
+                                           required>
+                                    <div align="center">
+                                        <button ng-click="addParameter()" ng-disabled="addParameterForm.$invalid"><i
+                                                class="glyphicon glyphicon-plus"
+                                                style="font-size: small"></i> Add
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row" ng-if="parameters.length">
+                <div class="panel">
+                    <div class="row">
+                        <div class="block">
+                            <div class="block-name" ng-click="isCollapsedParameters = !isCollapsedParameters"> Parameters</div>
+                            <div uib-collapse="isCollapsedParameters">
+                                <div ng-repeat="parameter in parameters track by $index" class="parameter" style="margin-top: 15px">
+                                    {{parameter.name}}
+                                    <span style="float: right"><i uib-popover-template="popover.templateUrl"
+                                                                  popover-title="Rename parameter"
+                                                                  popover-is-open="parameter.popoverIsOpen"
+                                                                  class="glyphicon glyphicon-pencil pointer-icon"
+                                                                  style="font-size: xx-small"></i>
+                                    <i class="glyphicon glyphicon-trash pointer-icon" style="font-size: xx-small"
+                                       ng-click="deleteParameter($index)"></i>
+                                        </span>
+                                    <script type="text/ng-template" id="popoverTemplate.html">
+                                        <input type="text" ng-model="newParameterName"
+                                               ng-keyup="$event.keyCode == 13 && renameParameter(newParameterName, $index)">
+                                    </script>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xs-12 col-md-9">
+            <div class="row">
+                <div class="panel">
+                    <div class="row">
+                        <div class="block">
+                            <div class="block-name" ng-click="isCollapsedSchedule = !isCollapsedSchedule"> Schedule</div>
+                            <div class="row" uib-collapse="isCollapsedSchedule">
+                                <div ng-repeat="day in days" style="margin-top: 15px">
+                                    <div class="col-xs-3 day">
+                                        <i class="glyphicon glyphicon-remove"
+                                           style="font-size: x-small; float: right; cursor: pointer"
+                                           ng-click="deleteDay($index)"></i>
+                                        <div style="padding: 0 15px">
+                                            <div class="day-name"> Day {{$index + 1}}</div>
+                                            <div ng-if="day.duration" style="font-size: small"> Duration of day:
+                                                {{day.duration}}
+                                            </div>
+                                            <div ng-repeat="object in day.objects" ng-class="{'border-day': !$last}">
+                                                <div class="properties-logo">{{object.name}}</div>
+                                                <div>Duration: {{object.duration}}</div>
+                                                <div ng-repeat="property in object.properties">
+                                                    <div>{{property.name}}: {{property.value}}</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-xs-3 day add-day" ng-if="$last">
+                                        <div class="day-name"> Day {{$index + 2}}</div>
+                                        <form role="form" name="addDayForm">
+                                            <input class="option-input" type="number" min="1"
+                                                   placeholder="Duration: "
+                                                   ng-model="duration" required>
+                                            <div align="center">
+                                                <button ng-click="addDay(duration)" ng-disabled="addDayForm.$invalid"><i
+                                                        class="glyphicon glyphicon-plus"
+                                                        style="font-size: small"></i> Add
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                                <div ng-if="!days.length">
+                                    <div class="col-xs-3 day add-day">
+                                        <div class="day-name"> Day 1</div>
+                                        <form role="form" name="addDayForm">
+                                            <input class="option-input" type="number" min="1"
+                                                   placeholder="Duration: "
+                                                   ng-model="duration" required>
+                                            <div align="center">
+                                                <button ng-click="addDay(duration)" ng-disabled="addDayForm.$invalid"><i
+                                                        class="glyphicon glyphicon-plus"
+                                                        style="font-size: small"></i> Add
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row" ng-if="allObjects.length">
+                <div class="panel">
+                    <div class="row">
+                        <div class="block">
+                            <div class="block-name" ng-click="isCollapsedObjects = !isCollapsedObjects"> Objects</div>
+                            <div class="row" style="padding: 0 20px" uib-collapse="isCollapsedObjects" >
+                                <div align="right">Search: <input ng-model="search"></div>
+                                <div ng-repeat="object in allObjects | filter:search" class="object col-xs-3" style="margin-top: 15px">
+                                    <div class="object-name"><span style="font-weight: 700;">{{object.name}}</span> ({{object.count}})</div>
+                                    <div><span class="object-property">Duration:</span> {{object.duration}}</div>
+                                    <div ng-repeat="property in object.properties track by $index">
+                                        <div><span class="object-property">{{property.name}}</span>: {{property.value}}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -42,7 +248,6 @@
 </article>
 
 
-<script type="text/javascript" src="../bower_components/angular/angular.min.js"></script>
 <script type="text/javascript" src="main.js"></script>
 <script type="text/javascript" src="main.controller.js"></script>
 <script type="text/javascript" src="main.service.js"></script>

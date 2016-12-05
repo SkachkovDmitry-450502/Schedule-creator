@@ -1,37 +1,44 @@
-var mysql = require('mysql');
-var async = require('async');
-var db = require('./db');
-var objectDB = require('./objectDB');
-
 import DB from './db';
 
 const getSQL = 'SELECT parameter_keys.name, parameter.value FROM parameter ' +
     'INNER JOIN parameter_keys USING (idKey) ' +
     'WHERE idObject = ?';
+const insertSQL = 'INSERT INTO parameter (idObject, idKey, value)' +
+    'VALUES (?, (SELECT idKey FROM parameter_keys ' +
+    'INNER JOIN schedule USING (idSchedule) ' +
+    'WHERE schedule.idSchedule = (SELECT idSchedule FROM object WHERE idObject = ?) AND parameter_keys.name = ?), ?)';
 
 export default class PropertyDB extends DB {
 
     static get(idObject) {
         return new Promise((resolve, reject) => {
-            this.getConnection()
-                .then(connection => {
-                    connection.query(getSQL, idObject, function (error, parameters) {
-                        connection.release();
-                        error ? reject(error) : resolve(parameters);
-                    });
-                })
-                .catch(error => reject(error));
+            let request = {
+                sql: getSQL,
+                array: idObject
+            };
+
+            this.getFromDatabase(request)
+                .then(
+                    properties => resolve(properties),
+                    error => reject(error));
         });
     }
 
-    save(info){
+    static insert(info) {
         return new Promise((resolve, reject) => {
-        })
-
+            let request = {
+                sql: insertSQL,
+                array: [info.idObject, info.idObject, info.name, info.value]
+            };
+            this.getFromDatabase(request)
+                .then(
+                    result => resolve(result.insertId),
+                    error => reject(error));
+        });
     }
 }
 
-// exports.get = function (idObject, callback) {
+// exports.getByName = function (idObject, callback) {
 //     async.waterfall([
 //         function (callback) {
 //             db.pool.getConnection(callback);

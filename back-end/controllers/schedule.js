@@ -1,44 +1,42 @@
 import ScheduleDB from '../db/scheduleDB';
 
 export default class Schedule {
-    constructor(request) {
-        this.email = request.email;
-        this.name = request.name;
+    constructor(info) {
+        this.info = info;
+    }
+
+    static getNames(info){
+        return ScheduleDB.getNames(info.email);
     }
 
     static get(info) {
+        return ScheduleDB.get(info.email, info.name);
+    }
+
+    save() {
         return new Promise((resolve, reject) => {
-            let scheduleInfo = {};
-            ScheduleDB.getNames(info.email)
-                .then(names => {
-                    scheduleInfo.names = names;
-                    return ScheduleDB.get(info.email, names[0].name)
+            this._checkExist()
+                .then(isExist => {
+                    isExist ? resolve(false) : resolve(ScheduleDB.insert(this.info));
                 })
+                .catch(error => reject(error));
+        });
+    }
+
+    delete() {
+        return ScheduleDB.delete(this.info);
+    }
+
+    _checkExist() {
+        return new Promise((resolve, reject) => {
+            ScheduleDB.get(this.info.email, this.info.name)
                 .then(schedule => {
-                    scheduleInfo.schedule = schedule;
-                    resolve(scheduleInfo);
+                    console.log(schedule);
+                    resolve(!!schedule);
                 })
                 .catch(error => reject(error));
         });
     }
 
-    insert() {
-        return new Promise((resolve, reject) => {
-            databaseFactory.create('scheduleDB')
-                .then(scheduleDB => {
-                    scheduleDB.insert();
-                })
-                .catch(error => reject(error));
-        });
-    }
 
-    delete(newInfo) {
-        return new Promise((resolve, reject) => {
-            databaseFactory.create('scheduleDB')
-                .then(scheduleDB => {
-                    scheduleDB.delete();
-                })
-                .catch(error => reject(error));
-        })
-    }
 }
